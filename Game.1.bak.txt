@@ -1,0 +1,425 @@
+﻿using AnimatedSprites.GameSprites;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using Color = Microsoft.Xna.Framework.Color;
+using Point = Microsoft.Xna.Framework.Point;
+using Rectangle = Microsoft.Xna.Framework.Rectangle;
+
+namespace AnimatedSprites
+{
+    public class Game1 : Game
+    {
+        private GraphicsDeviceManager _graphics;
+        private SpriteBatch _spriteBatch;
+        private SpriteManager spriteManager;
+
+        //TimeSpan targetElasedTime;
+
+
+        /*
+         * Global fields for keyboard and mouse states 
+         * 
+         */
+
+        KeyboardState keyboardState;
+        MouseState mouseState;
+        MouseState prevMouseState;
+        GamePadState gamePadState;
+
+
+        /* global collision variables */
+        bool collide;
+        int ringsCollisionRectOffset = 10;
+        int skullBallCollisionRectOffset = 10;
+        int plusCollisionRectOffset = 10;
+
+
+        /*
+         * Global variables/constants.  We are keeping them here for now
+         * but really of of this should be in their own module.....once out of the prototype 
+         * stage will will get right on that....
+         * 
+         */
+
+        int ringsSpeed = 2;
+        int skullBallSpeed = 1;
+        bool skullBallMovemenFlagX = false;
+        bool skullBallMovementFlagY = false;
+        bool plusMovementFlagX = false;
+        bool plusMovementFlagY = false;
+
+
+        /*
+         * Global state information for threeRings Entity 
+         */
+        Texture2D threeRingsTexture2D;
+        int threeRingsPixelFrameWidth;
+        int threeRingsPixelFrameHeight; 
+        int threeRingsPixelSheetColumns;
+        int threeRingsPixelSheetRows;
+        Point ringsFrameSize;
+        Point ringsCurrentFrame;
+        Point ringsSheetSize;
+        int ringsTimeSinceLastFrame;
+        int ringsMillisecondsPerFrame;
+        Vector2 ringsFramePosition = Vector2.Zero;
+
+
+
+        /*
+ * Global state information for the Plus Entity
+ */
+        Texture2D plusTexture2D;
+        int plusPixelFrameWidth;
+        int plusPixelFrameHeight;
+        int plusPixelSheetColumns;
+        int plusPixelSheetRows;
+        Point plusFrameSize;
+        Point plusCurrentFrame;
+        Point plusSheetSize;
+        int plusTimeSinceLastFrame;
+        int plusMillisecondsPerFrame;
+        Vector2 plusFramePosition;
+
+
+
+
+
+
+
+        public Game1()
+        {
+            _graphics = new GraphicsDeviceManager(this);
+            Content.RootDirectory = "Content";
+            IsMouseVisible = true;
+
+            /**
+             * Probably should remove this...but we keep it here for 
+             * historical reasons.....DO NOT UNCOMMENT THESE TWO STATEMENTS 
+             * ...unless you want your game to run like a garden slug.....
+             */
+            //targetElasedTime = new TimeSpan(0, 0, 0, 0, 50);
+            //TargetElapsedTime = new TimeSpan(0, 0, 0, 0, 50);
+        }
+
+        protected override void Initialize()
+        {
+            // TODO: Add your initialization logic here
+            spriteManager = new SpriteManager(this);
+            Components.Add(spriteManager);
+
+            ringsMillisecondsPerFrame = 5;
+            plusMillisecondsPerFrame = 100000000;
+
+            
+            threeRingsPixelFrameWidth = 75;
+            threeRingsPixelFrameHeight = 75;
+            threeRingsPixelSheetColumns = 6;
+            threeRingsPixelSheetRows = 8;
+            ringsFramePosition = Vector2.Zero;
+
+            plusPixelFrameWidth = 75;
+            plusPixelFrameHeight = 75;
+            plusPixelSheetColumns = 6;
+            plusPixelSheetRows = 4;
+            plusFramePosition = new Vector2(300,300);
+
+
+            ringsFrameSize = new Point(threeRingsPixelFrameWidth, threeRingsPixelFrameHeight);
+            ringsCurrentFrame = new Point(0, 0);
+            ringsSheetSize = new Point(threeRingsPixelSheetColumns, threeRingsPixelSheetRows);
+
+
+
+            plusFrameSize = new Point(plusPixelFrameWidth, plusPixelFrameHeight);
+            plusCurrentFrame = new Point(0, 0);
+            plusSheetSize = new Point(plusPixelSheetColumns, plusPixelSheetRows);
+
+
+            base.Initialize();
+        }
+
+        protected override void LoadContent()
+        {
+            _spriteBatch = new SpriteBatch(GraphicsDevice);
+            threeRingsTexture2D = Content.Load<Texture2D>(@"Images/threerings");
+           // skullBallTexture2D = Content.Load<Texture2D>(@"Images/skullBall");
+            plusTexture2D = Content.Load<Texture2D>(@"Images/plus");
+            // TODO: use this.Content to load your game content here
+        }
+
+        protected override void Update(GameTime gameTime)
+        {
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+                Exit();
+
+            // TODO: Add your update logic here
+
+            /**
+             * Frame animation managment for the Rings Entity
+             */
+
+            /*
+            ringsTimeSinceLastFrame += gameTime.ElapsedGameTime.Milliseconds;
+            if(ringsTimeSinceLastFrame > ringsMillisecondsPerFrame)
+            {
+                ringsTimeSinceLastFrame -= ringsMillisecondsPerFrame;
+                ++ringsCurrentFrame.X;
+                if (ringsCurrentFrame.X >= ringsSheetSize.X)
+                {
+                    ringsCurrentFrame.X = 0;
+                    ++ringsCurrentFrame.Y;
+                    if (ringsCurrentFrame.Y >= ringsSheetSize.Y)
+                        ringsCurrentFrame.Y = 0;
+                }
+            }
+            */
+
+           /**
+             * Frame animation management for the plus
+             */
+           /*
+            plusTimeSinceLastFrame += gameTime.ElapsedGameTime.Milliseconds;
+            if (plusTimeSinceLastFrame > plusMillisecondsPerFrame)
+            {
+                plusTimeSinceLastFrame -= plusMillisecondsPerFrame;
+                ++plusCurrentFrame.X;
+                if (plusCurrentFrame.X >= plusSheetSize.X)
+                {
+                    plusCurrentFrame.X = 0;
+                    ++plusCurrentFrame.Y;
+                    if (plusCurrentFrame.Y >= plusSheetSize.Y)
+                        plusCurrentFrame.Y = 0;
+                }
+            }
+            */
+
+            /*
+             * Here we use just if statements because calls to Keyboard.GetState() 
+             * are expensive and elif statements will at some point lock you into 
+             * the elif chain.  We don't need that here.  We just need to know what
+             * is in the keyboard buffer. If we are moving diagonally and both X and Y 
+             * states need to be updated...using an elif will basically only address the update of either X or Y
+             * Independent if statements will allow 
+             * 
+             * We need to toggle this.
+             */
+            /*
+            keyboardState = Keyboard.GetState();
+            if (keyboardState.IsKeyDown(Keys.Left))
+                ringsFramePosition.X -= ringsSpeed;
+            if (keyboardState.IsKeyDown(Keys.Right))
+                ringsFramePosition.X += ringsSpeed;
+            if (keyboardState.IsKeyDown(Keys.Up))
+                ringsFramePosition.Y -= ringsSpeed;
+            if (keyboardState.IsKeyDown(Keys.Down))
+                ringsFramePosition.Y += ringsSpeed;
+            
+            if(ringsFramePosition.X < 0)
+                ringsFramePosition.X = 0;
+            if(ringsFramePosition.Y < 0)
+                ringsFramePosition.Y = 0;
+            if (ringsFramePosition.X > Window.ClientBounds.Width - ringsFrameSize.X)
+                ringsFramePosition.X = Window.ClientBounds.Width - ringsFrameSize.X;
+            if (ringsFramePosition.Y > Window.ClientBounds.Height - ringsFrameSize.Y)
+                ringsFramePosition.Y = Window.ClientBounds.Height - ringsFrameSize.Y;
+            */
+
+
+
+            /*
+             * Here we get the state of the mouse
+             * I think we are going to have some config switches 
+             * that toggles this feature
+             */
+
+            /*
+            mouseState = Mouse.GetState();
+            if(mouseState.X != prevMouseState.X   ||  mouseState.Y != prevMouseState.Y)
+                ringsFramePosition = new Vector2(mouseState.X, mouseState.Y);
+            prevMouseState = mouseState;
+            */
+
+            /*
+             * Here we get the state of the GamePad.   Only supports XBox controllers
+             * at the moment......
+             * we are going to eventually toggle this feature
+             * 
+             * 
+             */
+            /*
+            gamePadState = GamePad.GetState(PlayerIndex.One);
+            if(gamePadState.Buttons.A == ButtonState.Pressed)
+            {
+                ringsFramePosition.X += ringsSpeed * gamePadState.ThumbSticks.Left.X;
+                ringsFramePosition.Y -= ringsSpeed * gamePadState.ThumbSticks.Left.Y;
+                GamePad.SetVibration(PlayerIndex.One, 1f, 1f);
+            }
+            else
+            {
+                ringsFramePosition.X += ringsSpeed * gamePadState.ThumbSticks.Left.X;
+                ringsFramePosition.Y -= ringsSpeed * gamePadState.ThumbSticks.Left.Y;
+                GamePad.SetVibration(PlayerIndex.One, 0, 0);
+            }
+            */
+
+            /*SkullBall Movement*/
+
+            /*Plus Movement*/
+
+            //plusAnimate();
+            //skullAnimate();
+
+
+
+
+            /*If there is a collision....end the game*/
+            collide = Collide();
+            if(collide)
+            {
+                Exit();
+            }
+
+
+
+
+            
+
+            base.Update(gameTime);
+        }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+
+
+            // TODO: Add your drawing code here
+
+
+
+
+            _spriteBatch.Begin (SpriteSortMode.FrontToBack,BlendState.AlphaBlend);
+
+         
+         //  Rectangle ringsRectangle = new Rectangle(ringsCurrentFrame.X * ringsFrameSize.X, ringsCurrentFrame.Y * ringsFrameSize.Y, ringsFrameSize.X,ringsFrameSize.Y);
+
+
+            //Vector2.Zero,
+            /*
+            _spriteBatch.Draw(threeRingsTexture2D,
+                             ringsFramePosition,
+                              ringsRectangle,
+                              Color.White,
+                              0,
+                              Vector2.Zero,
+                              1,
+                              SpriteEffects.None,
+                              0
+                              );
+            */
+
+            //Rectangle plusRectangle = new Rectangle(plusCurrentFrame.X * plusCurrentFrame.X, plusCurrentFrame.Y * plusFrameSize.Y, plusFrameSize.X, plusFrameSize.Y);
+
+            /*
+            _spriteBatch.Draw(plusTexture2D,
+                              plusFramePosition,
+                              plusRectangle,
+                              Color.White,
+                              0,
+                              Vector2.Zero,
+                              1,
+                              SpriteEffects.None,
+                              0
+                              );
+
+            */
+
+
+            _spriteBatch.End();
+
+            base.Draw(gameTime);
+
+        }
+
+
+        protected void plusAnimate()
+        {
+           if (plusMovementFlagX)
+            {
+                plusFramePosition.X += 1;
+            }
+          else 
+            {
+                plusFramePosition.X -= 1;
+            }
+
+            if (plusMovementFlagY)
+            {
+                plusFramePosition.Y += 1;
+            }
+            else
+            {
+                plusFramePosition.Y -= 1;
+            }
+
+
+
+            if (plusFramePosition.X < 0)
+            {
+                plusFramePosition.X = 0;
+                plusMovementFlagX = true;
+            }
+            if (plusFramePosition.Y < 0)
+            {
+                plusFramePosition.Y = 0;
+                plusMovementFlagY = true;
+            }
+            if (plusFramePosition.X > Window.ClientBounds.Width - plusFrameSize.X)
+            {
+                plusFramePosition.X = Window.ClientBounds.Width - plusFrameSize.X;
+                plusMovementFlagX = false;
+            }
+            if (plusFramePosition.Y > Window.ClientBounds.Height - plusFrameSize.Y)
+            {
+                plusFramePosition.Y = Window.ClientBounds.Height - plusFrameSize.Y;
+                plusMovementFlagY = false;
+            }
+        }
+
+
+        protected bool Collide()
+        {
+            bool collisionFlag = false;
+            bool skullBallCollisionFlag = false;
+            bool plusCollisionFlag = false;
+
+            int _ringsFramePositionX = (int) ringsFramePosition.X + ringsCollisionRectOffset;
+            int _ringsFramePositionY = (int) ringsFramePosition.Y + ringsCollisionRectOffset;
+            int _ringsFrameSizeX =  (int) ringsFrameSize.X - (ringsCollisionRectOffset * 2);
+            int _ringsFrameSizeY = (int) ringsFrameSize.Y -(ringsCollisionRectOffset * 2);
+
+
+
+            int _plusFramePositionX = (int)plusFramePosition.X + plusCollisionRectOffset;
+            int _plusFramePositionY = (int)plusFramePosition.Y + plusCollisionRectOffset;
+            int _plusFrameSizeX = (int)plusFrameSize.X - (plusCollisionRectOffset * 2);
+            int _plusFrameSizeY = (int)plusFrameSize.Y - (plusCollisionRectOffset * 2);
+
+
+
+
+            Microsoft.Xna.Framework.Rectangle ringsCollisionRectangle = new Microsoft.Xna.Framework.Rectangle(_ringsFramePositionX, _ringsFramePositionY, ringsFrameSize.X, ringsFrameSize.Y);
+            Microsoft.Xna.Framework.Rectangle plusCollisionRectangle = new Microsoft.Xna.Framework.Rectangle(_plusFramePositionX, _plusFramePositionY, plusFrameSize.X, plusFrameSize.Y);
+
+
+
+            plusCollisionFlag = ringsCollisionRectangle.Intersects(plusCollisionRectangle);
+
+            collisionFlag = (plusCollisionFlag);
+
+            return collisionFlag;
+
+        }
+    }
+}
